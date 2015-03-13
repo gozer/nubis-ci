@@ -117,7 +117,7 @@ resource "aws_launch_configuration" "jenkins" {
 
 resource "aws_route53_record" "jenkins" {
    zone_id = "${var.zone_id}"
-   name = "${var.project}.${var.domain}"
+   name = "ci.${var.domain}"
    type = "CNAME"
    ttl = "30"
    records = ["dualstack.${aws_elb.jenkins.dns_name}"]
