@@ -63,6 +63,13 @@ jenkins::plugin { "scm-api" :
     version => "0.2"
 }
 
+jenkins::plugin { "ircbot" :
+    version => "2.26"
+}
+jenkins::plugin { "instant-messaging" :
+    version => "1.33"
+}
+
 # This is for librarian-puppet, below, and somewhat ugly
 package { "ruby-dev":
   ensure => "1:1.9.3.4",
