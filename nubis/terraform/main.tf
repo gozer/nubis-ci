@@ -89,7 +89,7 @@ resource "aws_autoscaling_group" "jenkins" {
   availability_zones = [ ]
   vpc_zone_identifier = [ "subnet-a9139ccc", "subnet-cb3a97bc", "subnet-227fbc7b" ]
 
-  name = "${var.project}-${var.release}-${var.build}"
+  name = "ci-${var.project}-${var.release}-${var.build}"
   
   load_balancers = [
    "${aws_elb.jenkins.name}"
@@ -105,7 +105,7 @@ resource "aws_autoscaling_group" "jenkins" {
 }
 
 resource "aws_launch_configuration" "jenkins" {
-    name = "${var.project}-${var.release}-${var.build}"
+    name = "ci-${var.project}-${var.release}-${var.build}"
     image_id = "${var.ami}"
     instance_type = "m3.medium"
     key_name = "${var.key_name}"
