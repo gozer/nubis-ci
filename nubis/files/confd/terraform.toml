@@ -1,0 +1,7 @@
+[template]
+src = "terraform.tmpl"
+dest = "/var/lib/jenkins/jobs/%%NUBIS_CI_NAME%%-deployment/main.tf"
+prefix = "/%%NUBIS_CI_NAME%%/%%ENVIRONMENT%%"
+keys = [
+    "/config"
+]

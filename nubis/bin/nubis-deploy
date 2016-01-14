@@ -13,9 +13,25 @@ CF_TEMPLATE=$WORKSPACE/artifacts/main.json
 PLAYBOOK=$WORKSPACE/../ansible.yaml
 VARIABLES=$WORKSPACE/../vars.yaml
 
+TF_VARIABLES=$WORKSPACE/../override.tfvars
+TF_MAIN=$WORKSPACE/../main.tf
+
 FULL_STACK_NAME=$stack_name-$environment
 
 if [ -f $CF_TEMPLATE ]; then
+
+echo "Running Terraform"
+terraform plan \
+  -var region=$region \
+  -var env=$environment \
+  -var template=$CF_TEMPLATE \
+  -var owner=$owner \
+  -var service_name=$service_name \
+  -var stack_name=$FULL_STACK_NAME \
+  -var ami=$ami \
+  -var-file=$TF_VARIABLES \
+  $WORKSPACE/..
+
 echo "Running CloudFormation"
 ansible-playbook -i localhost, \
   $PLAYBOOK \

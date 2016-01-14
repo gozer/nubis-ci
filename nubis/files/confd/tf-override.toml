@@ -1,0 +1,7 @@
+[template]
+src = "tf-override.tmpl"
+dest = "/var/lib/jenkins/jobs/%%NUBIS_CI_NAME%%-deployment/override.tfvars"
+prefix = "/%%NUBIS_CI_NAME%%/%%ENVIRONMENT%%"
+keys = [
+    "/config"
+]
