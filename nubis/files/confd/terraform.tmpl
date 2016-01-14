@@ -19,8 +19,7 @@ provider "aws" {
 resource "aws_cloudformation_stack" "deploy" {
   name = "${var.stack_name}"
   capabilities = [ "CAPABILITY_IAM" ]
-  on_failure = "DELETE"
-  timeout_in_minutes = "30"
+  disable_rollback = true
   template_body = "${file(var.template)}"
   parameters = {
     Environment = "${var.env}"
