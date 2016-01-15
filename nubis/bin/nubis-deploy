@@ -23,8 +23,8 @@ if [ -f $CF_TEMPLATE ]; then
 echo "Running Terraform"
 
 # Fake out Terraform, in the case where we didn't create this stack initially
-if [ ! -f terraform.tfstate ]; then
-  cat <<EOF > terraform.tfstate
+if [ ! -f ${environment}.tfstate ]; then
+  cat <<EOF > ${environment}.tfstate
 {
   "version": 1,
   "serial": 1,
