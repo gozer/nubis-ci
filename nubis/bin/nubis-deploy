@@ -21,6 +21,35 @@ FULL_STACK_NAME=$stack_name-$environment
 if [ -f $CF_TEMPLATE ]; then
 
 echo "Running Terraform"
+
+# Fake out Terraform, in the case where we didn't create this stack initially
+if [ ! -f terraform.tfstate ]; then
+  cat <<EOF > terraform.tfstate
+{
+  "version": 1,
+  "serial": 1,
+  "modules": [
+    {
+      "path": [
+        "root"
+      ],
+      "resources": {
+        "aws_cloudformation_stack.deploy": {
+          "type": "aws_cloudformation_stack",
+          "primary": {
+            "id": "$FULL_STACK_NAME",
+            "attributes": {
+              "name": "$FULL_STACK_NAME"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
+EOF
+fi
+
 terraform plan \
   -var region=$region \
   -var env=$environment \
