@@ -50,7 +50,9 @@ if [ ! -f terraform.tfstate ]; then
 EOF
 fi
 
-terraform plan \
+echo "Terraform Plan"
+terraform plan -no-color \
+  -state ${environment}.tfstate \
   -var region=$region \
   -var env=$environment \
   -var template=$CF_TEMPLATE \
@@ -61,18 +63,19 @@ terraform plan \
   -var-file=$TF_VARIABLES \
   $WORKSPACE/..
 
-echo "Running CloudFormation"
-ansible-playbook -i localhost, \
-  $PLAYBOOK \
-  -e stack_name=$FULL_STACK_NAME \
-  -e owner=$owner \
-  -e service_name=$service_name \
-  -e key_name=$key_name \
-  -e region=$region \
-  -e env=$environment \
-  -e ami=$ami \
-  -e template=$CF_TEMPLATE \
-  -e @$VARIABLES
+echo "Terraform Apply"
+terraform apply -no-color \
+  -state ${environment}.tfstate \
+  -var region=$region \
+  -var region=$region \
+  -var env=$environment \
+  -var template=$CF_TEMPLATE \
+  -var owner=$owner \
+  -var service_name=$service_name \
+  -var stack_name=$FULL_STACK_NAME \
+  -var ami=$ami \
+  -var-file=$TF_VARIABLES \
+  $WORKSPACE/..
 
 export CONSUL_ENDPOINT
 CONSUL_ENDPOINT="public.consul.$environment.$region.$NUBIS_ACCOUNT.$NUBIS_DOMAIN"
