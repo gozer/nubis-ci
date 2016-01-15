@@ -91,10 +91,6 @@ jenkins::plugin { "scm-api" :
     version => "1.0"
 }
 
-jenkins::plugin { "ansible" :
-    version => "0.4"
-}
-
 jenkins::plugin { "rebuild" :
     version => "1.25"
 }
@@ -135,32 +131,4 @@ package { "git":
 
 package { "make":
     ensure => "3.81-8.2ubuntu3",
-}
-
-# Needed because current ansible/boto has bugs with STS tokens
-
-class { 'python':
-  version => 'system',
-  pip => true,
-  dev => true,
-}
-
-python::pip { 'boto':
-  ensure => '2.38.0',
-  require => Class['python'],
-}
-
-python::pip { 'ansible':
-  ensure => '1.9.4',
-  require => Class['python'],
-}
-
-wget::fetch { "download latest cloudformation ansible module (bugfix)":
-  source => 'https://raw.githubusercontent.com/ansible/ansible-modules-core/e25605cd5bca003a5071aebbdaeb2887e8e5c659/cloud/amazon/cloudformation.py',
-  destination => '/usr/local/lib/python2.7/dist-packages/ansible/modules/core/cloud/amazon/cloudformation.py',
-  verbose => true,
-  redownload => true, # The file already exists, we replace it
-  require => [
-    Python::Pip['ansible'],
-  ]
 }
