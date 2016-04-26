@@ -18,6 +18,7 @@ eval `curl -fq http://169.254.169.254/latest/user-data`
 # Create the job directories
 mkdir -p /var/lib/jenkins/jobs/$NUBIS_CI_NAME-build
 mkdir -p /var/lib/jenkins/jobs/$NUBIS_CI_NAME-deployment
+mkdir -p /var/lib/jenkins/jobs/backups
 
 # Security (http://jenkins-ci.org/security-144)
 mkdir -p /var/lib/jenkins/secrets
@@ -28,6 +29,7 @@ chmod 644 /var/lib/jenkins/secrets/slave-to-master-security-kill-switch
 # Drop main configurations
 cp /etc/nubis.d/jenkins-config.xml /var/lib/jenkins/config.xml
 cp /etc/nubis.d/jenkins-proxy.xml /var/lib/jenkins/proxy.xml
+cp /etc/nubis.d/jenkins-thinBackup.xml /var/lib/jenkins/thinBackup.xml
 cp /etc/nubis.d/jenkins-location.xml /var/lib/jenkins/jenkins.model.JenkinsLocationConfiguration.xml
 cp /etc/nubis.d/jenkins-s3bucketpublisher.xml /var/lib/jenkins/hudson.plugins.s3.S3BucketPublisher.xml
 
@@ -55,6 +57,9 @@ cp /etc/nubis.d/jenkins-deployment-config.xml /var/lib/jenkins/jobs/$NUBIS_CI_NA
 perl -pi -e "s[%%NUBIS_GIT_REPO%%][$NUBIS_GIT_REPO]g" /var/lib/jenkins/jobs/$NUBIS_CI_NAME-deployment/config.xml
 perl -pi -e "s[%%NUBIS_CI_NAME%%][$NUBIS_CI_NAME]g" /var/lib/jenkins/jobs/$NUBIS_CI_NAME-deployment/config.xml
 
+# Drop backup job
+cp /etc/nubis.d/backup.xml /var/lib/jenkins/jobs/backups/config.xml
+
 # Discover available regions
   # All regions according to AWS (US only), with our own first
   REGIONS=($AWS_REGION $(aws --region "$AWS_REGION" ec2 describe-regions | jq -r '.Regions[] | .RegionName' | grep -E "^us-" | grep -v "$AWS_REGION" | sort))
@@ -77,6 +82,11 @@ perl -pi -e "s[%%NUBIS_CI_GITHUB_CLIENT_SECRET%%][$NUBIS_CI_GITHUB_CLIENT_SECRET
 
 # Make sure jenkins owns this stuff
 chown -R jenkins:jenkins /var/lib/jenkins
+
+# Pull latest backups in
+mkdir -p /mnt/jenkins/backups
+chown jenkins:jenkins /mnt/jenkins/backups
+su jenkins -c "aws --region $AWS_REGION s3 sync s3://$NUBIS_CI_BUCKET/backups/ /mnt/jenkins/backups/"
 
 cat <<EOF | tee /opt/nubis-builder/secrets/variables.json
 {
