@@ -1,4 +1,8 @@
-# nubis-ci [![Build Status](https://travis-ci.org/nubisproject/nubis-ci.svg?branch=master)](https://travis-ci.org/nubisproject/nubis-ci)
+# nubis-ci
+
+[![Version](https://img.shields.io/github/release/nubisproject/nubis-ci.svg?maxAge=2592000)](https://github.com/nubisproject/nubis-ci)
+[![Build Status](https://img.shields.io/travis/nubisproject/nubis-ci/master.svg?maxAge=2592000)](https://travis-ci.org/nubisproject/nubis-ci)
+[![Issues](https://img.shields.io/github/issues/nubisproject/nubis-ci.svg?maxAge=2592000)](https://github.com/nubisproject/nubis-ci/issues)
 
 ## Quick start
 0. `git clone git@github.com:nubisproject/nubis-base.git`
