@@ -1,6 +1,6 @@
 #XXX: Needs released version
 
-$terraform_version = '0.8.7'
+$terraform_version = '0.8.8'
 
 package { 'awscli':
   ensure => latest,
