@@ -7,12 +7,12 @@
     <com.chikli.hudson.plugin.naginator.NaginatorOptOutProperty plugin="naginator@1.17.2">
       <optOut>false</optOut>
     </com.chikli.hudson.plugin.naginator.NaginatorOptOutProperty>
-    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.25">
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.28">
       <autoRebuild>false</autoRebuild>
       <rebuildDisabled>false</rebuildDisabled>
     </com.sonyericsson.rebuild.RebuildSettings>
   </properties>
-  <scm class="hudson.plugins.git.GitSCM" plugin="git@3.5.1">
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@3.8.0">
     <configVersion>2</configVersion>
     <userRemoteConfigs>
       <hudson.plugins.git.UserRemoteConfig>
@@ -45,7 +45,7 @@
   </triggers>
   <concurrentBuild>false</concurrentBuild>
   <builders>
-    <javaposse.jobdsl.plugin.ExecuteDslScripts plugin="job-dsl@1.65">
+    <javaposse.jobdsl.plugin.ExecuteDslScripts plugin="job-dsl@1.68">
       <scriptText>@Grab(&apos;org.yaml:snakeyaml:1.17&apos;)
 import org.yaml.snakeyaml.Yaml
 Yaml parser = new Yaml()
@@ -55,6 +55,8 @@ def site_configuration_path = &quot;nubis/sites.yaml&quot;
 def default_name = &quot;nubis-metadata NUBIS_CI_NAME&quot;.execute().text.trim()
 def default_git_repo = &quot;nubis-metadata NUBIS_GIT_REPO&quot;.execute().text.trim()
 def arena = &quot;nubis-metadata NUBIS_ARENA&quot;.execute().text.trim()
+def artifact_bucket = &quot;nubis-metadata NUBIS_CI_BUCKET&quot;.execute().text.trim()
+def artifact_region = &quot;nubis-region&quot;.execute().text.trim()
 
 def sites
 
@@ -259,6 +261,44 @@ sites.each {
         }
 
         archiveArtifacts(&apos;artifacts/**&apos;)
+
+        s3Upload {
+           profileName(&apos;nubis-ci&apos;)
+           entries {
+             entry {
+               // Destination bucket.
+               bucket(artifact_bucket + &apos;/artifacts&apos; )
+               // Files to be uploaded.
+               sourceFile(&apos;artifacts/**&apos;)
+               excludedFile(&apos;&apos;)
+               storageClass(null)
+               // Region location of the Bucket.
+               selectedRegion(artifact_region)
+               // If Enabled, the artifacts won&apos;t be published if the build failed.
+               noUploadOnFailure(true)
+               // Upload directly from the slave, instead of proxying the upload to the master.
+               uploadFromSlave(false)
+               // When enabled, this lets Jenkins fully manage the artifacts, exactly like it does when the artifacts are published to the master.
+               managedArtifacts(true)
+               // Use S3 AES-256 server side encryption support.
+               useServerSideEncryption(false)
+               // When enabled, Jenkins will ignore the directory structure of the artifacts in the source project and copy all matching artifacts directly into the specified bucket.
+               flatten(false)
+               // When enabled, files will be compressed with GZIP and &quot;Content-Encoding&quot; header will be set to &quot;gzip&quot;.
+               gzipFiles(true)
+               // By default, artifacts will be cleaned up as part of job history rotation policy.
+               keepForever(false)
+               // If option is enabled, content of artifact would be displayed directly in browser.
+               showDirectlyInBrowser(false)
+             }
+           }
+
+           // When disabled, only publish to S3 after completion of concurrent builds to prevent overriding published artifact.
+           dontWaitForConcurrentBuildCompletion(false)
+           // Allows filtering log messages by level of severity: INFO, WARNING and SEVERE.
+           consoleLogLevel(&apos;INFO&apos;)
+           pluginFailureResultConstraint(&apos;FAILURE&apos;)
+        }
         downstreamParameterized {
             trigger(&quot;${site_name}-deployment&quot;) {
                 condition(&apos;UNSTABLE_OR_BETTER&apos;)

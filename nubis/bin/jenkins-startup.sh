@@ -24,25 +24,6 @@ chown jenkins:jenkins $BACKUP_DIR
 # Pull latest backups
 /usr/local/bin/nubis-ci-backup restore
 
-# Build our latest backup chain with incrementals
-
-# List all backups in proper order
-ALL_BACKUPS=$(find $BACKUP_DIR -maxdepth 1 -type d   -name 'FULL*' -o -name 'DIFF*' | sort -t- -k2)
-
-# Find the last full backup
-LAST_FULL=$(basename "$(echo "$ALL_BACKUPS" | grep FULL | tail -n1)")
-
-# And all following incrementals
-INCREMENTALS=$(echo "$ALL_BACKUPS" | sed -e "0,/$LAST_FULL/d" | xargs -n1 basename)
-
-# Recover from latest backup (full + incrementals)
-for BACKUP in $LAST_FULL $INCREMENTALS; do
-  echo "Restoring from $BACKUP_DIR/$BACKUP/"
-  su - jenkins -c "rsync -av $BACKUP_DIR/$BACKUP/ /var/lib/jenkins/"
-done
-
-## BACKUP END
-
 # Security (http://jenkins-ci.org/security-144)
 mkdir -p /var/lib/jenkins/secrets
 echo false > /var/lib/jenkins/secrets/slave-to-master-security-kill-switch

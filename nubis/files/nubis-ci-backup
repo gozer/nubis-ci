@@ -23,11 +23,42 @@ case $ACTION in
       echo "Skipping backups, initial restore not performed"
       exit 0
     fi
-    aws s3 sync --delete --exclude=.initial-sync "$BACKUP_DIR/" "s3://$BACKUP_BUCKET/" "$@"
+
+    aws s3 sync --delete --exclude=.initial-sync "$BACKUP_DIR/" "s3://$BACKUP_BUCKET/backups/" "$@"
     ;;
   restore)
     echo "Restoring from backup"
-    aws s3 sync --delete --exclude=.initial-sync "s3://$BACKUP_BUCKET/" "$BACKUP_DIR/" "$@"
+
+    # Backwards-compat: Our old backups were stored at the root, yuck, move them in place
+    if ! aws s3 ls "s3://$BACKUP_BUCKET/backups/.relocated"; then
+      # move the files over
+      if aws s3 mv --recursive --exclude="*" --include="DIFF-*/*" --include="FULL-*/*" --include="BACKUPSET_*.zip" --exclude="backups/*" --exclude="*/backups/*" "s3://$BACKUP_BUCKET/" "s3://$BACKUP_BUCKET/backups/"; then
+        # Note our successful completion
+        date | aws s3 cp - "s3://$BACKUP_BUCKET/backups/.relocated"
+      fi
+    fi
+
+    # Retrieve backups from s3
+    aws s3 sync --delete --exclude=.initial-sync "s3://$BACKUP_BUCKET/backups/" "$BACKUP_DIR/" "$@"
+
+    # Build our latest backup chain with incrementals
+
+    # List all backups in proper order
+    ALL_BACKUPS=$(find $BACKUP_DIR -maxdepth 1 -type d   -name 'FULL*' -o -name 'DIFF*' | sort -t- -k2)
+
+    # Find the last full backup
+    LAST_FULL=$(basename "$(echo "$ALL_BACKUPS" | grep FULL | tail -n1)")
+
+    # And all following incrementals
+    INCREMENTALS=$(echo "$ALL_BACKUPS" | sed -e "0,/$LAST_FULL/d" | xargs -n1 basename)
+
+    # Recover from latest backup (full + incrementals)
+    for BACKUP in $LAST_FULL $INCREMENTALS; do
+      echo "Restoring from $BACKUP_DIR/$BACKUP/"
+      rsync -av "$BACKUP_DIR/$BACKUP/" /var/lib/jenkins/
+    done
+
+    # Note the fact we have done it successfully
     touch "$BACKUP_DIR/.initial-sync"
   ;;
   *)
